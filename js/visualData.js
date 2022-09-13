@@ -96,6 +96,10 @@ function initializeProjectList() {
         d3.select("#project-link").attr("href", `https://app.strateegia.digital/journey/${defaultSelectedProject}`);
         drawProject(defaultSelectedProject, global_selected_mode);
     });
+    d3.select("#time_ticks").on("input", (e) => {
+        console.log("time_ticks %", e);
+        filterByTime(e.target.value);
+    });
 }
 
 async function drawProject(projectId, s_mode) {
@@ -162,6 +166,7 @@ async function drawProject(projectId, s_mode) {
 
 function commonFilterAction() {
     const filteredData = applyFilters(cData);
+    console.log("after applyFilters %o", filteredData);
     fData = filteredData;
     countStatistics(fData);
     buildGraph(filteredData.nodes, filteredData.links);
@@ -206,6 +211,8 @@ function filterArray(array, filters) {
 }
 
 function applyFilters(inputData) {
+    console.log("applyFilters list of filters %o", filters);
+    console.log("applyFilters inputData %o", inputData);
     const otherData = {
         "nodes": [...inputData.nodes],
         "links": [...inputData.links]
@@ -223,7 +230,9 @@ function applyFilters(inputData) {
     filteredData.links = inputData.links.filter(d => {
         const isDSource = nodeIDs.includes(d.source);
         const isDTarget = nodeIDs.includes(d.target);
-        const condition1 = isDSource && isDTarget;
+        const isDSourceID = nodeIDs.includes(d.source.id);
+        const isDTargetID = nodeIDs.includes(d.target.id);
+        const condition1 = isDSource && isDTarget || isDSourceID && isDTargetID;
         return condition1;
     });
     fData = filteredData;
@@ -234,10 +243,10 @@ function filterByTime(inputDate) {
     let parseTime = d3.timeFormat("%d/%m/%Y - %H:%M:%S");
 
     let timeScale = d3.scaleTime().domain([0, 50])
-        .range([d3.min(cData.nodes, d => d.created_at), d3.max(cData.nodes, d => d.created_at)]);
+        .range([d3.min(cData.nodes, d => d.createdAt), d3.max(cData.nodes, d => d.createdAt)]);
     let dateLimit = timeScale(inputDate);
 
-    filters.created_at = created_at => created_at <= dateLimit;
+    filters.createdAt = createdAt => createdAt <= dateLimit;
     d3.select("#choose_date").text(parseTime(dateLimit))
 
     updateGraph();

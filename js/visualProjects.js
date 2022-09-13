@@ -310,6 +310,7 @@ d3.select(window).on("load", function () {
 });
 
 function updateAll(data_links, alpha) {
+    console.log("dataLinks %o", data_links);
     updateForces(data_links, alpha);
     updateDisplay();
 }
