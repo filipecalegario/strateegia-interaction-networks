@@ -66,6 +66,8 @@ function initializeProjectList() {
                 // let selected_mode = d3.select("#modes-list").property('value');
                 d3.select("#project-link").attr("href", `https://app.strateegia.digital/journey/${selected_project}`);
                 drawProject(selected_project, global_selected_mode);
+                d3.select("#choose_date").text("filtrar itens por data: ");
+                d3.select("#time_ticks").property("value", 50);
             })
             .selectAll("option")
             .data(listProjects, d => d.id);
@@ -247,7 +249,7 @@ function filterByTime(inputDate) {
     let dateLimit = timeScale(inputDate);
 
     filters.createdAt = createdAt => createdAt <= dateLimit;
-    d3.select("#choose_date").text(parseTime(dateLimit))
+    d3.select("#choose_date").text(`filtrar itens por data: ${parseTime(dateLimit)}`)
 
     updateGraph();
 }
