@@ -4,7 +4,7 @@ const widthProjectChooser = projectChooser.node().getBoundingClientRect();
 let width = widthProjectChooser.width;
 let height = 1000;
 const g = svg.append("g");
-g.append("rect").attr("width", 2).attr("height", 2).attr("fill", "black");
+// g.append("rect").attr("width", 2).attr("height", 2).attr("fill", "black");
 let toggle = false;
 
 // update size-related forces
