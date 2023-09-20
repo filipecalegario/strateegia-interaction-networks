@@ -4,6 +4,7 @@ const widthProjectChooser = projectChooser.node().getBoundingClientRect();
 let width = widthProjectChooser.width;
 let height = 1000;
 const g = svg.append("g");
+g.append("rect").attr("width", 2).attr("height", 2).attr("fill", "black");
 let toggle = false;
 
 // update size-related forces
@@ -90,10 +91,9 @@ const simulation = d3.forceSimulation();
 
 // set up the simulation and event to update locations after each tick
 export function initializeSimulation(data_nodes, data_links) {
-    simulation.nodes(data_nodes);
+    simulation.nodes(data_nodes).on("tick", ticked);
     initializeForces(data_nodes, data_links);
     simulation.alpha(2).restart();
-    simulation.on("tick", ticked);
 }
 
 // add forces to the simulation
@@ -106,60 +106,50 @@ function initializeForces(data_nodes, data_links) {
         .force("collide", d3.forceCollide())
         .force("forceX", d3.forceX())
         .force("forceY", d3.forceY());
+
     // apply properties to each of the forces
     updateForces(data_links);
 }
 
-// apply new force properties
-function updateForces(data_links, alpha) {
-    // get each force by name and update the properties
-    simulation
-        .force("center")
-        .x(width * forceProperties.center.x)
-        .y(height * forceProperties.center.y);
-    simulation
-        .force("charge")
-        .strength(
-            forceProperties.charge.strength * forceProperties.charge.enabled
-        )
-        .distanceMin(forceProperties.charge.distanceMin)
-        .distanceMax(forceProperties.charge.distanceMax);
-    simulation
-        .force("collide")
-        .strength(
-            forceProperties.collide.strength * forceProperties.collide.enabled
-        )
-        .radius(forceProperties.collide.radius)
-        .iterations(forceProperties.collide.iterations);
-    simulation
-        .force("forceX")
-        .strength(
-            forceProperties.forceX.strength * forceProperties.forceX.enabled
-        )
-        .x(width * forceProperties.forceX.x);
-    simulation
-        .force("forceY")
-        .strength(
-            forceProperties.forceY.strength * forceProperties.forceY.enabled
-        )
-        .y(height * forceProperties.forceY.y);
-    simulation
-        .force("link")
-        .id(function (d) {
-            return d.id;
-        })
-        .distance(forceProperties.link.distance)
-        .iterations(forceProperties.link.iterations)
-        .links(forceProperties.link.enabled ? data_links : []);
+function updateForces(data_links, alpha = 0.2) {
+    const centerX = width * forceProperties.center.x;
+    const centerY = height * forceProperties.center.y;
 
-    // updates ignored until this is run
-    // restarts the simulation (important if simulation has already slowed down)
-    // simulation.alpha(2).restart();
-    if (alpha != undefined) {
-        simulation.alpha(alpha).restart();
-    } else {
-        simulation.alpha(0.2).restart();
+    const forces = {
+        center: ["x", "y"],
+        charge: ["strength", "distanceMin", "distanceMax"],
+        collide: ["strength", "radius", "iterations"],
+        forceX: ["strength", "x"],
+        forceY: ["strength", "y"],
+    };
+
+    for (let forceName in forces) {
+        let force = simulation.force(forceName);
+        forces[forceName].forEach((property) => {
+            let value = forceProperties[forceName][property];
+            if (property === "strength" || property === "iterations") {
+                value *= forceProperties[forceName].enabled ? 1 : 0;
+            }
+            force[property](value);
+        });
     }
+
+    simulation.force("center").x(centerX).y(centerY);
+
+    // Separate link force due to its specific requirements
+    const linkForce = simulation.force("link");
+    linkForce
+        .id((d) => d.id)
+        .distance(forceProperties.link.distance)
+        .iterations(forceProperties.link.iterations);
+
+    if (forceProperties.link.enabled) {
+        linkForce.links(data_links);
+    } else {
+        linkForce.links([]);
+    }
+
+    simulation.alpha(alpha).restart();
 }
 
 //////////// DISPLAY ////////////
@@ -191,61 +181,57 @@ export function buildGraph(data_nodes, data_links) {
         "#b2b7bd",
     ];
     // let colors =     ["#ac92ea", "#e3b692", "#ed7d31", "#3aadd9", "#eb5463", "#46ceac", "#fdcd56", "#d56fac", "#636c77"];
-    simulation.stop();
+    // simulation.stop();
     svg.style("width", width + "px")
         .style("height", height + "px")
         .attr("viewBox", [0, 0, width, height]);
 
-    const color = d3
-        .scaleOrdinal()
-        .domain(categorias)
-        // .domain(["project", "map", "kit", "question", "comment", "reply", "agreement", "user", "users"])
-        .range(colors);
-    // .range(["#7f0000", "#b30000", "#d7301f", "#ef6548", "#fc8d59", "#fdbb84", "#fdd49e", "#fee8c8", "#fff7ec"]);
-    // .range(["#081d58", "#253494", "#225ea8", "#1d91c0", "#41b6c4", "#7fcdbb", "#c7e9b4", "#edf8b1", "#ffffd9"]);
-    // .range(["#ffffd9", "#edf8b1", "#c7e9b4", "#7fcdbb", "#41b6c4", "#1d91c0", "#225ea8", "#253494", "#081d58"] );
-    // .range(["#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6"]);
-    // .range(d3.schemeCategory10);
-    // .range(d3.schemePaired);
-    // .range(d3.schemeTableau10);
-    // .range(d3.schemeSet1);
-    // .range(["#0d0887","#5c01a6","#9c179e","#cc4778","#ed7953","#fdb42f","#f0f921"]);
-    // .range(["#eff3ff","#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5","#084594"]);
+    const color = d3.scaleOrdinal().domain(categorias).range(colors);
 
     const node_size = d3
         .scaleOrdinal()
         .domain(categorias)
         .range([10, 9, 8, 7, 6, 4, 3, 7, 9]);
 
+    // === LINKS ===
     let links_selection = g.selectAll("line.links").data(data_links);
 
-    // set the data and properties of link lines
+    // Update existing links
+    // (add any attribute or style updates required for existing links here)
+    // Example:
+    links_selection.style("stroke", "#aaa");
+
+    // Enter new links
     links_selection
         .enter()
         .append("line")
         .attr("class", "links")
         .style("stroke", "#aaa");
 
+    // Exit old links
     links_selection.exit().remove();
 
+    // === NODES ===
     let nodes_selection = g.selectAll("g.nodes").data(data_nodes, (d) => d.id);
 
-    let node_group = nodes_selection.enter().append("g").attr("class", "nodes");
-
-    let base_size = 3;
-
-    let t = d3.transition().duration(500).ease(d3.easeLinear);
-
+    // Update existing nodes
     nodes_selection
         .select("circle")
         .attr("fill", (d) => color(d.group))
         .attr("r", (d) => node_size(d.group));
 
+    // Enter new nodes
+    let node_group = nodes_selection
+        .enter()
+        .append("g")
+        .attr("class", "nodes")
+        .attr("cursor", "grab");
+
+    let t = d3.transition().duration(500).ease(d3.easeLinear);
+
     node_group
         .append("a")
-        .attr("xlink:href", function (d) {
-            return d.dashboardUrl;
-        })
+        .attr("xlink:href", (d) => d.dashboardUrl)
         .attr("target", "_blank")
         .append("circle")
         .attr("fill", "white")
@@ -257,28 +243,34 @@ export function buildGraph(data_nodes, data_links) {
 
     node_group
         .append("text")
-        .text(function (d) {
-            return d.title;
-        })
+        .text((d) => d.title)
         .attr("x", 6)
         .attr("y", 3)
         .style("display", "none");
 
-    node_group.attr("cursor", "grab");
+    // Node tooltip
+    node_group.append("title").text((d) => d.title);
 
-    // node tooltip
-    node_group.append("title").text(function (d) {
-        return d.title;
-    });
-
+    // Drag behaviors
     const drag = d3
         .drag()
         .on("start", dragstarted)
         .on("drag", dragged)
         .on("end", dragended);
 
-    node_group.call(drag).on("mouseover", focus).on("mouseout", unfocus);
+    node_group
+        .call(drag)
+        .on("mouseover", focus)
+        .on("mouseout", unfocus)
+        .each(function (d) {
+            d.x = d.x || d.x === 0 ? width * 0.5 : d.x;
+            d.y = d.y || d.y === 0 ? height * 0.5 : d.y;
+        });
 
+    simulation.nodes(data_nodes).on("tick", ticked);
+    simulation.force("link").links(data_links);
+
+    // Exit old nodes
     nodes_selection.exit().remove();
 
     // visualize the data
@@ -310,9 +302,10 @@ function ticked() {
         });
 
     d3.selectAll("g.nodes").attr("transform", function (d) {
-        if (d.x == undefined || d.y == undefined) {
-            return;
-        }
+        // if (d.x == undefined || d.y == undefined) {
+        //     return;
+        // }
+        // return "translate(" + (d.x || 0.0) + "," + (d.y || 0.0) + ")";
         return "translate(" + d.x + "," + d.y + ")";
     });
     // .attr("cx", function(d) { return d.x; })

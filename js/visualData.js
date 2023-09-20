@@ -144,7 +144,7 @@ async function initializeProjectList() {
             return d;
         });
 
-    const defaultSelectedProject = "64f8cb76fb1632425184b81e";
+    const defaultSelectedProject = "627e4febe3d4056cc916370b";
     localStorage.setItem("selectedProject", defaultSelectedProject);
     //const project = await getProjectById(access_token, defaultSelectedProject);
     //const mapId = project.maps[0].id;
@@ -243,18 +243,19 @@ function commonFilterAction() {
     console.log("after applyFilters %o", filteredData);
     fData = filteredData;
     countStatistics(fData);
-    buildGraph(filteredData.nodes, filteredData.links);
     return filteredData;
 }
 
 function initializeGraph() {
     const filteredData = commonFilterAction();
     initializeSimulation(filteredData.nodes, filteredData.links);
+    buildGraph(filteredData.nodes, filteredData.links);
     updateAll(filteredData.links);
 }
 
 function updateGraph() {
     const filteredData = commonFilterAction();
+    buildGraph(filteredData.nodes, filteredData.links);
     updateAll(filteredData.links);
 }
 
@@ -587,10 +588,41 @@ async function periodicCheck() {
     );
     console.log("periodicCheck() cData: %o", cData);
     console.log("periodicCheck() jGData: %o", justGatheredData);
-    cData = justGatheredData;
+    cData = {
+        nodes: mergeData(cData.nodes, justGatheredData.nodes),
+        links: mergeData(cData.links, justGatheredData.links),
+    };
     updateGraph();
     console.log("nodes to summary %o", nodeToSummary);
     statusUpdate();
+}
+
+/**
+ * Merge the properties of the old data into the new data based on the `id`.
+ * @param {Array} oldData - The old data array.
+ * @param {Array} newData - The new data array.
+ * @returns {Array} - The merged data array.
+ */
+function mergeData(oldData, newData) {
+    // Create a map from the old data for fast lookup based on id.
+    const oldDataMap = new Map(oldData.map((d) => [d.id, d]));
+
+    // For each entry in the new data, merge properties from the old data.
+    newData.forEach((newEntry) => {
+        const oldEntry = oldDataMap.get(newEntry.id);
+        if (oldEntry) {
+            // List of properties you want to merge from old data.
+            const propertiesToMerge = ["x", "y", "vx", "vy", "index"];
+
+            propertiesToMerge.forEach((prop) => {
+                if (oldEntry[prop] !== undefined) {
+                    newEntry[prop] = oldEntry[prop];
+                }
+            });
+        }
+    });
+
+    return newData;
 }
 
 /* 
