@@ -77,10 +77,21 @@
         <h1 style="color:#825DED; font-weight: 700;" id="engajamento_media_num"></h1>
       </div>
     </div>
+    <!-- <div class="row progress">
+      <div class="progress-bar" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0"
+      aria-valuemax="100"></div>
+    </div> -->
     <div class="row" id="graph-view" style="display: none;">
       <svg id="main_svg"></svg>
       <a id="downloadAnchorElem"></a>
       <a id="link_svg"></a>
+    </div>
+    <div class="row input-group mb-3">
+      <select class="col form-select" id="intervals"></select>
+      <button type="button" class="col btn" id="periodic-check-button">inicializando...</button>
+    </div>
+    <div class="row mb-3">
+      <p class="col" id="periodic-check-status"></p>
     </div>
   </div>
 
@@ -95,7 +106,7 @@
   <script type="module" src="./js/utils/d3functions.js"></script>
 
   <script src="../js/utils/utils.js"></script>
-  <script src="./js/visualProjects.js"></script>
+  <script type="module" src="./js/visualProjects.js"></script>
 
   <script type="module" src="js/visualData.js"></script>
 
