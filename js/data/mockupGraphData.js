@@ -15690,5 +15690,5 @@ async function loadJSON(url) {
 }
 
 export async function gatherMockupGraphData2() {
-  return await loadJSON("./js/data/sample-large.json");
+  return await loadJSON("./js/data/sample-medium.json");
 }

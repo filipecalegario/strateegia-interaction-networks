@@ -38,7 +38,7 @@ async function initBeeswarm() {
     console.log("Mockup graph data loaded:", data);
 
     // SVG configuration
-    const width = 1500, height = 1000;
+    const width = 2000, height = 1500;
     const svg = d3.select("#chart").attr("width", width).attr("height", height);
     // Increase left margin to ensure nodes on the left are visible
     const margin = { top: 50, right: 200, bottom: 80, left: 100 };
