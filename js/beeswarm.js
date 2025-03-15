@@ -98,7 +98,8 @@ function initBeeswarm() {
         .text(d => `${d.title} (${d.group}) - ${d.title ? d.title.length : 0} chars`);
 
     // Add X axis to the container group
-    const xAxis = d3.axisBottom(xScale);
+    const xAxis = d3.axisBottom(xScale)
+        .tickFormat(d3.timeFormat("%b %Y")); // Format to show month and year
     g.append("g")
         .attr("transform", `translate(0, ${innerHeight})`)
         .call(xAxis)
