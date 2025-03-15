@@ -220,15 +220,18 @@ async function drawProject(projectId, s_mode) {
 
     if (selected_mode !== INDICATORS_MODE) {
         initializeGraph();
+        // The loading spinner will be hidden by the simulation when it's stable
     } else {
         const filteredData = applyFilters(cData);
         fData = filteredData;
         countStatistics(fData);
+
+        // For indicators mode, we need to hide the spinner manually
+        d3.select("#loading-spinner").style("display", "none");
+        d3.select("#graph-view").style("display", "block");
+        d3.select("#statistics").style("display", "block");
     }
 
-    d3.select("#loading-spinner").style("display", "none");
-    d3.select("#graph-view").style("display", "block");
-    d3.select("#statistics").style("display", "block");
     console.log("stop loading... %o", new Date());
 }
 
@@ -248,6 +251,11 @@ function commonFilterAction() {
 
 function initializeGraph() {
     const filteredData = commonFilterAction();
+
+    // Show statistics immediately
+    d3.select("#statistics").style("display", "block");
+
+    // Initialize simulation (this will handle the loading spinner)
     initializeSimulation(filteredData.nodes, filteredData.links);
     buildGraph(filteredData.nodes, filteredData.links);
     updateAll(filteredData.links);
