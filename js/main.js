@@ -1,4 +1,9 @@
 import { getUser } from "https://unpkg.com/strateegia-api/strateegia-api.js";
+import { saveJson, saveAsSVG } from "./visualProjects.js";
+
+// Expose functions to the global scope for HTML button access
+window.saveJson = saveJson;
+window.saveAsSVG = saveAsSVG;
 
 const accessToken = localStorage.getItem("strateegiaAccessToken");
 

@@ -1,11 +1,11 @@
-import { gatherMockupGraphData } from './data/mockupGraphData.js';
+import { gatherMockupGraphData2 } from './data/mockupGraphData.js';
 
 // Execute when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     initBeeswarm();
 });
 
-function initBeeswarm() {
+async function initBeeswarm() {
     let categorias = [
         "project",
         "map",
@@ -32,7 +32,7 @@ function initBeeswarm() {
     const colorGroup = d3.scaleOrdinal().domain(categorias).range(colors);
 
     // Get data from the mockup function
-    const data = gatherMockupGraphData();
+    const data = await gatherMockupGraphData2();
 
     // Log the loaded data
     console.log("Mockup graph data loaded:", data);
@@ -98,8 +98,7 @@ function initBeeswarm() {
         .text(d => `${d.title} (${d.group}) - ${d.title ? d.title.length : 0} chars`);
 
     // Add X axis to the container group
-    const xAxis = d3.axisBottom(xScale)
-        .tickFormat(d3.timeFormat("%b %Y")); // Format to show month and year
+    const xAxis = d3.axisBottom(xScale);
     g.append("g")
         .attr("transform", `translate(0, ${innerHeight})`)
         .call(xAxis)

@@ -15674,3 +15674,21 @@ export function gatherMockupGraphData() {
   }
   return mockupGraphData;
 }
+
+async function loadJSON(url) {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Erro ao carregar JSON: ${response.status}`);
+    }
+    const data = await response.json();
+    console.log("Dados carregados:", data);
+    return data;
+  } catch (error) {
+    console.error("Erro ao buscar o JSON:", error);
+  }
+}
+
+export async function gatherMockupGraphData2() {
+  return await loadJSON("./js/data/sample-large.json");
+}
