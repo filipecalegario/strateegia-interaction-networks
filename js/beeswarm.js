@@ -41,7 +41,7 @@ function initBeeswarm() {
     const width = 1500, height = 1000;
     const svg = d3.select("#chart").attr("width", width).attr("height", height);
     // Increase left margin to ensure nodes on the left are visible
-    const margin = { top: 50, right: 50, bottom: 80, left: 100 };
+    const margin = { top: 50, right: 200, bottom: 80, left: 100 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
@@ -117,36 +117,67 @@ function initBeeswarm() {
         .text("Timeline");
 
     // Add legend for node sizes
-    const legendGroup = svg.append("g")
-        .attr("transform", `translate(${width - margin.right - 150}, ${margin.top})`);
+    const sizeLegendGroup = svg.append("g")
+        .attr("transform", `translate(${width - margin.right + 20}, ${margin.top})`);
 
-    legendGroup.append("text")
+    sizeLegendGroup.append("text")
         .attr("x", 0)
         .attr("y", 0)
         .text("Node Size: Title Length")
         .style("font-weight", "bold");
 
-    // Add sample circles for the legend
-    const legendData = [
+    // Add sample circles for the size legend
+    const sizeLegendData = [
         { label: `${minTitleLength} chars`, radius: radiusScale(minTitleLength) },
         { label: `${Math.floor((minTitleLength + maxTitleLength) / 2)} chars`, radius: radiusScale(Math.floor((minTitleLength + maxTitleLength) / 2)) },
         { label: `${maxTitleLength} chars`, radius: radiusScale(maxTitleLength) }
     ];
 
     let yOffset = 20;
-    legendData.forEach(item => {
-        legendGroup.append("circle")
+    sizeLegendData.forEach(item => {
+        sizeLegendGroup.append("circle")
             .attr("cx", 10)
             .attr("cy", yOffset)
             .attr("r", item.radius)
             .attr("fill", "#666");
 
-        legendGroup.append("text")
+        sizeLegendGroup.append("text")
             .attr("x", 25)
             .attr("y", yOffset + 5)
             .text(item.label)
             .style("font-size", "12px");
 
         yOffset += item.radius * 2 + 10;
+    });
+
+    // Add legend for node colors
+    const colorLegendGroup = svg.append("g")
+        .attr("transform", `translate(${width - margin.right + 20}, ${margin.top + yOffset + 30})`);
+
+    colorLegendGroup.append("text")
+        .attr("x", 0)
+        .attr("y", 0)
+        .text("Node Color: Type")
+        .style("font-weight", "bold");
+
+    // Add color swatches for each category
+    let colorYOffset = 20;
+    categorias.forEach((category, i) => {
+        // Add color swatch
+        colorLegendGroup.append("rect")
+            .attr("x", 0)
+            .attr("y", colorYOffset - 10)
+            .attr("width", 20)
+            .attr("height", 20)
+            .attr("fill", colors[i]);
+
+        // Add category label
+        colorLegendGroup.append("text")
+            .attr("x", 30)
+            .attr("y", colorYOffset + 2)
+            .text(category)
+            .style("font-size", "12px");
+
+        colorYOffset += 25; // Space between legend items
     });
 } 

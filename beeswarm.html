@@ -32,13 +32,23 @@
             margin-left: auto;
             margin-right: auto;
         }
+
+        /* Legend styles */
+        .legend-title {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .legend-item {
+            font-size: 12px;
+        }
     </style>
 </head>
 
 <body>
     <h2>Beeswarm Visualization</h2>
     <p class="description">Visualização temporal de nós onde o tamanho de cada círculo é proporcional ao comprimento do
-        título do item.</p>
+        título do item. As cores representam os diferentes tipos de nós no sistema.</p>
     <svg id="chart" width="1500" height="1000"></svg>
 
     <!-- Import the external JavaScript module -->
