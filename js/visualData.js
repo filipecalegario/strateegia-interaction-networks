@@ -144,7 +144,7 @@ async function initializeProjectList() {
             return d;
         });
 
-    const defaultSelectedProject = "627e4febe3d4056cc916370b";
+    const defaultSelectedProject = labs[0].projects[0].id;;
     localStorage.setItem("selectedProject", defaultSelectedProject);
     //const project = await getProjectById(access_token, defaultSelectedProject);
     //const mapId = project.maps[0].id;
