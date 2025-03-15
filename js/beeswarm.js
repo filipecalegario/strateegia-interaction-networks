@@ -53,6 +53,23 @@ function initBeeswarm() {
     const parseDate = d3.timeParse("%Y-%m-%dT%H:%M:%S.%LZ");
     data.nodes.forEach(d => d.date = parseDate(d.createdAt));
 
+    // Calculate node sizes based on title length
+    // Find min and max title lengths for scaling
+    const minTitleLength = d3.min(data.nodes, d => d.title ? d.title.length : 0);
+    const maxTitleLength = d3.max(data.nodes, d => d.title ? d.title.length : 0);
+
+    // Create a scale for node radius based on title length
+    // Set minimum radius to 3 and maximum to 15
+    const radiusScale = d3.scaleLinear()
+        .domain([minTitleLength, maxTitleLength])
+        .range([3, 15])
+        .clamp(true); // Prevent values outside the range
+
+    // Assign radius to each node
+    data.nodes.forEach(d => {
+        d.radius = radiusScale(d.title ? d.title.length : 0);
+    });
+
     // Time scale (X axis) - adjust range to account for margins
     const xScale = d3.scaleTime()
         .domain(d3.extent(data.nodes, d => d.date))
@@ -63,7 +80,7 @@ function initBeeswarm() {
     const simulation = d3.forceSimulation(data.nodes)
         .force("x", d3.forceX(d => xScale(d.date)).strength(1))
         .force("y", d3.forceY(innerHeight / 2))
-        .force("collide", d3.forceCollide(8)) // Slightly reduce collision radius if needed
+        .force("collide", d3.forceCollide(d => d.radius + 2)) // Use dynamic collision radius based on node size
         .stop();
 
     // Run simulation to avoid overlapping
@@ -75,10 +92,10 @@ function initBeeswarm() {
         .enter().append("circle")
         .attr("cx", d => d.x)
         .attr("cy", d => d.y)
-        .attr("r", 6)
+        .attr("r", d => d.radius) // Use the calculated radius
         .attr("fill", d => colorGroup(d.group))
         .append("title") // Tooltip
-        .text(d => `${d.title} (${d.group})`);
+        .text(d => `${d.title} (${d.group}) - ${d.title ? d.title.length : 0} chars`);
 
     // Add X axis to the container group
     const xAxis = d3.axisBottom(xScale);
@@ -98,4 +115,38 @@ function initBeeswarm() {
         .attr("x", innerWidth / 2)
         .attr("y", innerHeight + 60)
         .text("Timeline");
+
+    // Add legend for node sizes
+    const legendGroup = svg.append("g")
+        .attr("transform", `translate(${width - margin.right - 150}, ${margin.top})`);
+
+    legendGroup.append("text")
+        .attr("x", 0)
+        .attr("y", 0)
+        .text("Node Size: Title Length")
+        .style("font-weight", "bold");
+
+    // Add sample circles for the legend
+    const legendData = [
+        { label: `${minTitleLength} chars`, radius: radiusScale(minTitleLength) },
+        { label: `${Math.floor((minTitleLength + maxTitleLength) / 2)} chars`, radius: radiusScale(Math.floor((minTitleLength + maxTitleLength) / 2)) },
+        { label: `${maxTitleLength} chars`, radius: radiusScale(maxTitleLength) }
+    ];
+
+    let yOffset = 20;
+    legendData.forEach(item => {
+        legendGroup.append("circle")
+            .attr("cx", 10)
+            .attr("cy", yOffset)
+            .attr("r", item.radius)
+            .attr("fill", "#666");
+
+        legendGroup.append("text")
+            .attr("x", 25)
+            .attr("y", yOffset + 5)
+            .text(item.label)
+            .style("font-size", "12px");
+
+        yOffset += item.radius * 2 + 10;
+    });
 } 
