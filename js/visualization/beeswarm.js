@@ -13,7 +13,8 @@ export async function initBeeswarm(data) {
     // Constantes de configuração
     const categorias = NODE_GROUPS;
     const colors = NODE_COLORS;
-    const width = 800, height = 400;
+    const containerWidth = d3.select("#beeswarm-view").node().getBoundingClientRect().width;
+    const width = containerWidth, height = 700;
     const margin = { top: 10, right: 10, bottom: 50, left: 10 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
@@ -78,10 +79,17 @@ export async function initBeeswarm(data) {
     bounds.minX -= padding; bounds.maxX += padding;
     bounds.minY -= padding; bounds.maxY += padding;
 
-    const scale = Math.min(innerWidth / (bounds.maxX - bounds.minX), innerHeight / (bounds.maxY - bounds.minY));
+    // Calcular escala e translação para zoom to fit
+    const xScale_ = innerWidth / (bounds.maxX - bounds.minX);
+    const yScale_ = innerHeight / (bounds.maxY - bounds.minY);
+    const scale = Math.min(xScale_, yScale_);
 
-    // Aplica a transformação de zoom e translação
-    g.attr("transform", `translate(${margin.left}, ${margin.top}) scale(${scale}) translate(${-bounds.minX}, ${-bounds.minY})`);
+    // Calcular offsets para centralizar o conteúdo no SVG
+    const offsetX = (innerWidth - ((bounds.maxX - bounds.minX) * scale)) / 2;
+    const offsetY = (innerHeight - ((bounds.maxY - bounds.minY) * scale)) / 2;
+
+    // Aplicar transformação ao grupo principal
+    g.attr("transform", `translate(${margin.left + offsetX}, ${margin.top + offsetY}) scale(${scale}) translate(${-bounds.minX}, ${-bounds.minY})`);
 
     // Adiciona os círculos representando os nós
     g.selectAll("circle")
@@ -112,61 +120,96 @@ export async function initBeeswarm(data) {
         .attr("y", innerHeight + 60)
         .text("Timeline");
 
-    // Legenda para o tamanho dos nós (baseado no comprimento do título)
-    const sizeLegendGroup = d3.select("#beeswarm_svg").append("g")
-        .attr("transform", `translate(${width - margin.right + 20}, ${margin.top})`);
+    // ----- External Legends as separate SVGs -----
+    // Create or select a container div for legends within the page layout
+    let legendContainer = d3.select('#legend-container');
+    legendContainer.selectAll('*').remove();
+    if (legendContainer.empty()) {
+        legendContainer = d3.select('body').append('div')
+            .attr('id', 'legend-container')
+            .attr('class', 'row legend-container')
+            .style('margin-top', '20px');
+    }
 
-    sizeLegendGroup.append("text")
-        .text("Node Size: Title Length")
-        .style("font-weight", "bold");
+    // External SVG for node size legend (horizontal layout)
+    const sizeLegendSVG = legendContainer.append('svg')
+        .attr('id', 'size-legend-svg')
+        .attr('width', 400)  // Increased width for horizontal arrangement
+        .attr('height', 70)
+        .style('margin', '10px');
 
-    const midTitleLength = Math.floor((minTitleLength + maxTitleLength) / 2);
+    const sizeLegendGroup = sizeLegendSVG.append('g')
+        .attr('transform', 'translate(10, 20)');
+
+    // Title for node size legend
+    sizeLegendGroup.append('text')
+        .attr('x', 0)
+        .attr('y', 0)
+        .text('Node Size: Title Length')
+        .style('font-weight', 'bold');
+
+    // Prepare data for node size legend
     const sizeLegendData = [
-        { label: `${minTitleLength} chars`, radius: radiusScale(minTitleLength) },
-        { label: `${midTitleLength} chars`, radius: radiusScale(midTitleLength) },
-        { label: `${maxTitleLength} chars`, radius: radiusScale(maxTitleLength) }
+        { label: `${d3.min(data.nodes, d => d.title ? d.title.length : 0)} chars`, radius: radiusScale(d3.min(data.nodes, d => d.title ? d.title.length : 0)) },
+        { label: `${Math.floor((d3.min(data.nodes, d => d.title ? d.title.length : 0) + d3.max(data.nodes, d => d.title ? d.title.length : 0)) / 2)} chars`, radius: radiusScale(Math.floor((d3.min(data.nodes, d => d.title ? d.title.length : 0) + d3.max(data.nodes, d => d.title ? d.title.length : 0)) / 2)) },
+        { label: `${d3.max(data.nodes, d => d.title ? d.title.length : 0)} chars`, radius: radiusScale(d3.max(data.nodes, d => d.title ? d.title.length : 0)) }
     ];
 
-    let yOffset = 20;
+    // Arrange legend items horizontally
+    let xOffsetLegend = 0;
+    const legendY = 30; // fixed vertical position
     sizeLegendData.forEach(item => {
-        sizeLegendGroup.append("circle")
-            .attr("cx", 10)
-            .attr("cy", yOffset)
-            .attr("r", item.radius)
-            .attr("fill", "#666");
-
-        sizeLegendGroup.append("text")
-            .attr("x", 25)
-            .attr("y", yOffset + 5)
+        const legendItemGroup = sizeLegendGroup.append('g')
+            .attr('transform', `translate(${xOffsetLegend}, ${legendY})`);
+        legendItemGroup.append('circle')
+            .attr('cx', item.radius)
+            .attr('cy', 0)
+            .attr('r', item.radius)
+            .attr('fill', '#666');
+        legendItemGroup.append('text')
+            .attr('x', item.radius * 2 + 5)
+            .attr('y', 5)
             .text(item.label)
-            .style("font-size", "12px");
-
-        yOffset += item.radius * 2 + 10;
+            .style('font-size', '12px');
+        // Increase xOffset for next item (circle diameter + text spacing; adjust as needed)
+        xOffsetLegend += item.radius * 2 + 60;
     });
 
-    // Legenda para as cores dos nós
-    const colorLegendGroup = d3.select("#beeswarm_svg").append("g")
-        .attr("transform", `translate(${width - margin.right + 20}, ${margin.top + yOffset + 30})`);
+    // External SVG for node color legend (horizontal layout)
+    const colorLegendSVG = legendContainer.append('svg')
+        .attr('id', 'color-legend-svg')
+        .attr('width', 800)  // Increased width from 400 to 600
+        .attr('height', 70)
+        .style('margin', '10px');
 
-    colorLegendGroup.append("text")
-        .text("Node Color: Type")
-        .style("font-weight", "bold");
+    const colorLegendGroup = colorLegendSVG.append('g')
+        .attr('transform', 'translate(10, 20)');
 
-    let colorYOffset = 20;
+    // Title for node color legend
+    colorLegendGroup.append('text')
+        .attr('x', 0)
+        .attr('y', 0)
+        .text('Node Color: Type')
+        .style('font-weight', 'bold');
+
+    // Arrange color legend items horizontally
+    let xOffsetColorLegend = 0;
+    const colorLegendY = 30;
     categorias.forEach((category, i) => {
-        colorLegendGroup.append("rect")
-            .attr("x", 0)
-            .attr("y", colorYOffset - 10)
-            .attr("width", 20)
-            .attr("height", 20)
-            .attr("fill", colors[i]);
-
-        colorLegendGroup.append("text")
-            .attr("x", 30)
-            .attr("y", colorYOffset + 2)
+        const legendItem = colorLegendGroup.append('g')
+            .attr('transform', `translate(${xOffsetColorLegend}, ${colorLegendY})`);
+        legendItem.append('rect')
+            .attr('x', 0)
+            .attr('y', -10)
+            .attr('width', 20)
+            .attr('height', 20)
+            .attr('fill', colors[i]);
+        legendItem.append('text')
+            .attr('x', 25)
+            .attr('y', 5)
             .text(category)
-            .style("font-size", "12px");
-
-        colorYOffset += 25;
+            .style('font-size', '12px');
+        // Increase xOffset for next color item; adjust as needed
+        xOffsetColorLegend += 90;
     });
 }

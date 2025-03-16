@@ -768,7 +768,16 @@ function runSimulationInWebWorker(nodes, links) {
  */
 export function saveAsSVG() {
     // Get svg element
-    var svgElement = document.getElementById("main_svg");
+    let svgElement;
+
+    if (d3.select('#graph-view').style('display') !== 'none') {
+        svgElement = document.getElementById('main_svg');
+    } else if (d3.select('#beeswarm-view').style('display') !== 'none') {
+        svgElement = document.getElementById('beeswarm_svg');
+    } else {
+        alert('No visualization is currently visible.');
+        return;
+    }
 
     // Get svg source
     var serializer = new XMLSerializer();
