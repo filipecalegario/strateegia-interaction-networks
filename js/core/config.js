@@ -131,8 +131,7 @@ export function getFiltersByMode(mode) {
                 "divpoint",
                 "question",
                 "comment",
-                "reply",
-                "agreement"
+                "reply"
             ].includes(group)
         };
     }
