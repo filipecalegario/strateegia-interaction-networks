@@ -8,6 +8,7 @@ export const USER_MODE = "usuário";
 export const PROJECT_MODE = "projeto";
 export const INDICATORS_MODE = "indicadores";
 export const BEESWARM_MODE = "beeswarm";
+export const DEFAULT_MODE = BEESWARM_MODE;
 
 // Node groups and visual properties
 export const NODE_GROUPS = [

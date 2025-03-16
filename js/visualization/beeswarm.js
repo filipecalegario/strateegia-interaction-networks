@@ -102,14 +102,15 @@ export async function initBeeswarm(data) {
         .append("title")
         .text(d => `${d.title} (${d.group}) - ${d.title ? d.title.length : 0} chars`);
 
-    // Adiciona o eixo X e rotaciona os labels para melhor visualização
+    // Adiciona o eixo X e formata os ticks da timeline
+    const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b '%y"));
     g.append("g")
         .attr("transform", `translate(0, ${innerHeight})`)
-        .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%d/%m/%Y")))
+        .call(xAxis)
         .selectAll("text")
         .style("text-anchor", "end")
-        .attr("dx", "-.8em")
-        .attr("dy", ".15em")
+        .attr("dx", "-0.2em")
+        .attr("dy", "0.6em")
         .attr("transform", "rotate(-45)");
 
     // Rótulo do eixo X

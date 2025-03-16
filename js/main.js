@@ -3,7 +3,7 @@
  * Entry point for the application
  */
 
-import { USER_MODE, PROJECT_MODE, INDICATORS_MODE, BEESWARM_MODE } from "./core/config.js";
+import { USER_MODE, PROJECT_MODE, INDICATORS_MODE, BEESWARM_MODE, DEFAULT_MODE } from "./core/config.js";
 import { initializeRenderer } from "./visualization/graphRenderer.js";
 import { initializeUI, initializeProjectList, initializeModeSelector, initializePeriodicCheckButtonControls } from "./ui/uiManager.js";
 import { getProjects, drawProject, updateGraph } from "./core/projectManager.js";
@@ -14,7 +14,7 @@ import { checkAuthentication } from "./core/auth.js";
 // Parse URL parameters
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
-const selectedMode = urlParams.get("mode") || PROJECT_MODE;
+const selectedMode = DEFAULT_MODE;
 localStorage.setItem("selectedMode", selectedMode);
 
 /**
@@ -45,7 +45,7 @@ async function initializeApp() {
     d3.select("#periodic-check-button").on("click", () => {
         if (getPeriodicCheckStatus() === "inactive") {
             const selectedProject = localStorage.getItem("selectedProject");
-            const selectedMode = localStorage.getItem("selectedMode") || PROJECT_MODE;
+            const selectedMode = localStorage.getItem("selectedMode") || DEFAULT_MODE;
             startPeriodicCheck(accessToken, selectedProject, selectedMode, updateGraph);
         } else {
             stopPeriodicCheck();
@@ -58,12 +58,12 @@ async function initializeApp() {
 
     // Initialize project list
     initializeProjectList(projects, (selectedProject) => {
-        const selectedMode = localStorage.getItem("selectedMode") || PROJECT_MODE;
+        const selectedMode = localStorage.getItem("selectedMode") || DEFAULT_MODE;
         drawProject(accessToken, selectedProject, selectedMode);
     });
 
     // Initialize mode selector
-    const modes = [PROJECT_MODE, USER_MODE, INDICATORS_MODE, BEESWARM_MODE];
+    const modes = [BEESWARM_MODE, PROJECT_MODE, USER_MODE, INDICATORS_MODE];
     initializeModeSelector(modes, (selectedMode) => {
         localStorage.setItem("selectedMode", selectedMode);
         const selectedProject = localStorage.getItem("selectedProject");
