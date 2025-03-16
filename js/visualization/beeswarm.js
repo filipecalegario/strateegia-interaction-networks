@@ -105,7 +105,7 @@ export async function initBeeswarm(data) {
     // Adiciona o eixo X e rotaciona os labels para melhor visualização
     g.append("g")
         .attr("transform", `translate(0, ${innerHeight})`)
-        .call(d3.axisBottom(xScale))
+        .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%d/%m/%Y")))
         .selectAll("text")
         .style("text-anchor", "end")
         .attr("dx", "-.8em")
