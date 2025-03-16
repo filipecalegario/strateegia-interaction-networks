@@ -3,7 +3,7 @@
  * Entry point for the application
  */
 
-import { USER_MODE, PROJECT_MODE, INDICATORS_MODE } from "./core/config.js";
+import { USER_MODE, PROJECT_MODE, INDICATORS_MODE, BEESWARM_MODE } from "./core/config.js";
 import { initializeRenderer } from "./visualization/graphRenderer.js";
 import { initializeUI, initializeProjectList, initializeModeSelector, initializePeriodicCheckButtonControls } from "./ui/uiManager.js";
 import { getProjects, drawProject, updateGraph } from "./core/projectManager.js";
@@ -63,7 +63,7 @@ async function initializeApp() {
     });
 
     // Initialize mode selector
-    const modes = [INDICATORS_MODE, PROJECT_MODE, USER_MODE];
+    const modes = [PROJECT_MODE, USER_MODE, INDICATORS_MODE, BEESWARM_MODE];
     initializeModeSelector(modes, (selectedMode) => {
         localStorage.setItem("selectedMode", selectedMode);
         const selectedProject = localStorage.getItem("selectedProject");
