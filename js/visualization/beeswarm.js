@@ -1,47 +1,31 @@
-import { gatherMockupGraphData2 } from './data/mockupGraphData.js';
+import { gatherMockupGraphData2 } from '../data/mockupGraphData.js';
+import { NODE_GROUPS, NODE_COLORS } from '../core/config.js';
+// Execute when DOM is fully loaded 
+// document.addEventListener('DOMContentLoaded', async () => {
+//     // Get data from the mockup function
+//     const data = await gatherMockupGraphData2();
+//     // Log the loaded data
+//     console.log("Mockup graph data loaded:", data);
+//     initBeeswarm(data);
+// });
 
-// Execute when DOM is fully loaded
-document.addEventListener('DOMContentLoaded', () => {
-    initBeeswarm();
-});
-
-async function initBeeswarm() {
-    let categorias = [
-        "project",
-        "map",
-        "divpoint",
-        "question",
-        "comment",
-        "reply",
-        "agreement",
-        "user",
-        "users",
-    ];
-    let colors = [
-        "#023a78",
-        "#0b522e",
-        "#ff8000",
-        "#974da2",
-        "#e51d1d",
-        "#377eb8",
-        "#4eaf49",
-        "#636c77",
-        "#b2b7bd",
-    ];
+export async function initBeeswarm(data) {
+    let categorias = NODE_GROUPS;
+    let colors = NODE_COLORS;
 
     const colorGroup = d3.scaleOrdinal().domain(categorias).range(colors);
 
-    // Get data from the mockup function
-    const data = await gatherMockupGraphData2();
+    // Initialize SVG
+    let svg = d3.select("#beeswarm_svg");
 
-    // Log the loaded data
-    console.log("Mockup graph data loaded:", data);
+    // // Clear any existing content
+    svg.selectAll("*").remove();
 
     // SVG configuration
-    const width = 2000, height = 1500;
-    const svg = d3.select("#chart").attr("width", width).attr("height", height);
+    const width = 800, height = 400;
+    svg = svg.attr("width", width).attr("height", height);
     // Increase left margin to ensure nodes on the left are visible
-    const margin = { top: 50, right: 200, bottom: 80, left: 100 };
+    const margin = { top: 10, right: 10, bottom: 50, left: 10 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
@@ -50,8 +34,9 @@ async function initBeeswarm() {
         .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
     // Convert dates to Date objects
-    const parseDate = d3.timeParse("%Y-%m-%dT%H:%M:%S.%LZ");
-    data.nodes.forEach(d => d.date = parseDate(d.createdAt));
+    // const parseDate = d3.timeParse("%Y-%m-%dT%H:%M:%S.%LZ");
+    // const parseDate = d3.timeParse("%a %b %d %Y %H:%M:%S GMT%Z (%Z)");
+    data.nodes.forEach(d => d.date = d.createdAt);
 
     // Calculate node sizes based on title length
     // Find min and max title lengths for scaling
@@ -85,6 +70,29 @@ async function initBeeswarm() {
 
     // Run simulation to avoid overlapping
     for (let i = 0; i < 300; ++i) simulation.tick();
+
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    data.nodes.forEach(d => {
+        minX = Math.min(minX, d.x - d.radius);
+        maxX = Math.max(maxX, d.x + d.radius);
+        minY = Math.min(minY, d.y - d.radius);
+        maxY = Math.max(maxY, d.y + d.radius);
+    });
+
+    // Adicionar padding
+    const padding = 20;
+    minX -= padding;
+    maxX += padding;
+    minY -= padding;
+    maxY += padding;
+
+    // Calcular escala e translação para zoom to fit
+    const xScale_ = innerWidth / (maxX - minX);
+    const yScale_ = innerHeight / (maxY - minY);
+    const scale = Math.min(xScale_, yScale_);
+
+    // Aplicar transformação ao grupo principal
+    g.attr("transform", `translate(${margin.left}, ${margin.top}) scale(${scale}) translate(${-minX}, ${-minY})`);
 
     // Add circles to the container group
     g.selectAll("circle")

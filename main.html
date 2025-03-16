@@ -36,8 +36,8 @@
     <div class="row input-group mb-2">
       <div class="d-flex justify-content-end">
         <div>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="saveAsSVG()" id="export-svg">svg</button>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="saveJson()" id="export-json">json</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="save_svg_button">svg</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="save_json_button">json</button>
         </div>
       </div>
     </div>
@@ -95,6 +95,11 @@
       <a id="downloadAnchorElem"></a>
       <a id="link_svg"></a>
     </div>
+    <div class="row" id="beeswarm-view" style="display: none;">
+      <svg id="beeswarm_svg"></svg>
+      <a id="downloadAnchorElem"></a>
+      <a id="link_svg"></a>
+    </div>
     <div class="row input-group mb-3">
       <select class="col form-select" id="intervals"></select>
       <button type="button" class="col btn" id="periodic-check-button">inicializando...</button>
@@ -115,9 +120,9 @@
   <script type="module" src="./js/utils/d3functions.js"></script>
 
   <script src="../js/utils/utils.js"></script>
-  <script type="module" src="./js/visualProjects.js"></script>
+  <!-- <script type="module" src="./js/visualProjects.js"></script> -->
 
-  <script type="module" src="js/visualData.js"></script>
+  <!-- <script type="module" src="js/visualData.js"></script> -->
 
 </body>
 

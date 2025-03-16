@@ -1,26 +1,87 @@
-import { getUser } from "https://unpkg.com/strateegia-api/strateegia-api.js";
-import { saveJson, saveAsSVG } from "./visualProjects.js";
+/**
+ * Main Module
+ * Entry point for the application
+ */
 
-// Expose functions to the global scope for HTML button access
-window.saveJson = saveJson;
-window.saveAsSVG = saveAsSVG;
+import { USER_MODE, PROJECT_MODE, INDICATORS_MODE } from "./core/config.js";
+import { initializeRenderer } from "./visualization/graphRenderer.js";
+import { initializeUI, initializeProjectList, initializeModeSelector, initializePeriodicCheckButtonControls } from "./ui/uiManager.js";
+import { getProjects, drawProject, updateGraph } from "./core/projectManager.js";
+import { applyFilters } from "./data/dataManager.js";
+import { startPeriodicCheck, stopPeriodicCheck, getPeriodicCheckStatus } from "./core/periodicCheck.js";
+import { checkAuthentication } from "./core/auth.js";
 
-const accessToken = localStorage.getItem("strateegiaAccessToken");
+// Parse URL parameters
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+const selectedMode = urlParams.get("mode") || PROJECT_MODE;
+localStorage.setItem("selectedMode", selectedMode);
 
-if (accessToken == 'undefined') {
-    console.log("No access token");
-    window.alert("Authentication failed: No access token");
-} else {
-    console.log(accessToken);
-    getUser(accessToken).then((user) => {
-        localStorage.setItem("userId", user.id);
+/**
+ * Initialize the application
+ */
+async function initializeApp() {
+    console.log("Initializing application...");
+
+    // Check authentication
+    const isAuthenticated = await checkAuthentication();
+    if (!isAuthenticated) {
+        console.error("Authentication failed: No valid access token");
+        window.location.href = "index.html";
+        return;
+    }
+
+    // Get access token
+    const accessToken = localStorage.getItem("strateegiaAccessToken");
+
+    // Initialize renderer
+    initializeRenderer("svg#main_svg", "#project-chooser");
+
+    // Initialize UI
+    initializeUI();
+    initializePeriodicCheckButtonControls();
+
+    // Initialize periodic check button
+    d3.select("#periodic-check-button").on("click", () => {
+        if (getPeriodicCheckStatus() === "inactive") {
+            const selectedProject = localStorage.getItem("selectedProject");
+            const selectedMode = localStorage.getItem("selectedMode") || PROJECT_MODE;
+            startPeriodicCheck(accessToken, selectedProject, selectedMode, updateGraph);
+        } else {
+            stopPeriodicCheck();
+        }
     });
+
+    // Get projects
+    const projects = await getProjects(accessToken);
+    console.log("projects", projects);
+
+    // Initialize project list
+    initializeProjectList(projects, (selectedProject) => {
+        const selectedMode = localStorage.getItem("selectedMode") || PROJECT_MODE;
+        drawProject(accessToken, selectedProject, selectedMode);
+    });
+
+    // Initialize mode selector
+    const modes = [INDICATORS_MODE, PROJECT_MODE, USER_MODE];
+    initializeModeSelector(modes, (selectedMode) => {
+        localStorage.setItem("selectedMode", selectedMode);
+        const selectedProject = localStorage.getItem("selectedProject");
+        drawProject(accessToken, selectedProject, selectedMode);
+    });
+
+    // Draw initial project
+    const defaultSelectedProject = projects[0].id;
+    localStorage.setItem("selectedProject", defaultSelectedProject);
+    d3.select("#project-link").attr(
+        "href",
+        `https://app.strateegia.digital/journey/${defaultSelectedProject}`
+    );
+    drawProject(accessToken, defaultSelectedProject, selectedMode);
 }
 
-const botao = d3.select("#main-button");
-botao.on("click", () => {
-    console.log("clicked");
-});
+// Initialize the application when the DOM is loaded
+document.addEventListener("DOMContentLoaded", initializeApp);
 
 
 

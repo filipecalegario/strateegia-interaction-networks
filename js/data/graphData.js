@@ -1,7 +1,8 @@
 import * as api from "https://unpkg.com/strateegia-api/strateegia-api.js";
+import { NODE_GROUPS, NODE_COLORS, NODE_SIZES } from "../core/config.js";
 // import * as d3 from 'https://d3js.org/d3.v6.min.js';
 
-export async function gatherGraphData(accessToken, projectId, mode) {
+export async function gatherGraphData(accessToken, projectId) {
 
   const cData = {
     nodes: [],
@@ -29,10 +30,11 @@ export async function gatherGraphData(accessToken, projectId, mode) {
   // }
 
   function mapColorAndSize(group) {
-    const groups = ["project", "map", "divpoint", "question", "comment", "reply", "agreement", "user", "users"];
-    const colors = ["#023a78", "#0b522e", "#ff8000", "#974da2", "#e51d1d", "#377eb8", "#4eaf49", "#636c77", "#b2b7bd"];
+    // const groups = ["project", "map", "divpoint", "question", "comment", "reply", "agreement", "user", "users"];
+    const groups = NODE_GROUPS;
+    const colors = NODE_COLORS;
     // const sizes = [10, 9, 8, 7, 6, 4, 3, 7, 9];
-    const sizes = [100, 50, 8, 7, 6, 4, 3, 7, 9];
+    const sizes = NODE_SIZES;
     const color = d3.scaleOrdinal()
       .domain(groups)
       .range(colors);
@@ -75,10 +77,10 @@ export async function gatherGraphData(accessToken, projectId, mode) {
     addNode(projectId, project.title, "project", project.created_at, dashboardUrl);
   }
 
-  addNode("users", "Usuários", "users", project.created_at);
+  addNode("users_forged_id", "Usuários", "users", project.created_at);
   project.users.forEach(user => {
     addNode(user.id, user.name, "user", project.created_at);
-    addLink("users", user.id);
+    addLink("users_forged_id", user.id);
   });
 
   const mapRequests = [];
@@ -135,11 +137,11 @@ export async function gatherGraphData(accessToken, projectId, mode) {
         const commentCreatedBy = comment.created_by;
         const questionIdForGraph = `${comment.divergence_point_id}#${comment.question_id}`;
         addNode(commentId, commentText, "comment", commentCreatedAt, null);
-        if (mode === "projeto") {
-          addLink(questionIdForGraph, commentId);
-        } else {
-          addLink(commentCreatedBy, commentId); // USER
-        }
+        // if (mode === "projeto") {
+        addLink(questionIdForGraph, commentId);
+        // } else {
+        addLink(commentCreatedBy, commentId); // USER
+        // }
         const replies = comment.replies;
         replies.forEach(reply => {
           const replyId = reply.id;
@@ -147,22 +149,22 @@ export async function gatherGraphData(accessToken, projectId, mode) {
           const replyCreatedAt = reply.created_at;
           const replyCreatedBy = reply.created_by;
           addNode(replyId, replyText, "reply", replyCreatedAt, null);
-          if (mode === "projeto") {
-            addLink(commentId, replyId);
-          } else {
-            addLink(replyCreatedBy, replyId); // USER
-          }
+          // if (mode === "projeto") {
+          addLink(commentId, replyId);
+          // } else {
+          addLink(replyCreatedBy, replyId); // USER
+          // }
           reply.agreements.forEach((agreement, index) => {
             const agreementId = `${replyId}#${index}`;
             const agreementText = "OK";
             const agreementCreatedAt = agreement.created_at;
             const agreementCreatedBy = agreement.user_id;
             addNode(agreementId, agreementText, "agreement", agreementCreatedAt, null);
-            if (mode === "projeto") {
-              addLink(replyId, agreementId);
-            } else {
-              addLink(agreementCreatedBy, agreementId); // USER
-            }
+            // if (mode === "projeto") {
+            addLink(replyId, agreementId);
+            // } else {
+            addLink(agreementCreatedBy, agreementId); // USER
+            // }
           });
         });
         const agreements = comment.agreements;
@@ -173,11 +175,11 @@ export async function gatherGraphData(accessToken, projectId, mode) {
           const agreementCreatedAt = agreement.created_at;
           const agreementCreatedBy = agreement.user_id;
           addNode(agreementId, agreementText, "agreement", agreementCreatedAt, null);
-          if (mode === "projeto") {
-            addLink(commentId, agreementId);
-          } else {
-            addLink(agreementCreatedBy, agreementId); // USER
-          }
+          // if (mode === "projeto") {
+          addLink(commentId, agreementId);
+          // } else {
+          addLink(agreementCreatedBy, agreementId); // USER
+          // }
         });
       });
     });
