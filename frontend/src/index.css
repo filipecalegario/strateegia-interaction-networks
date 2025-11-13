@@ -1,0 +1,15 @@
+body {
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+    background-color: #ffffff;
+    color: #212529;
+}
+
+.main-page {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+}
+
+svg {
+    border: 1px solid #d4d1d1;
+}
